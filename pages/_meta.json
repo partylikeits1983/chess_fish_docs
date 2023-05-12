@@ -1,7 +1,9 @@
 {
   "index": "Introduction",
   "another": "Another Page",
-  "advanced": "Advanced (A Folder)",
+  "concepts": "Protocol Concepts",
+  "guides": "Protocol Guides",
+  "contracts": "Smart Contracts",
   "about": {
     "title": "About",
     "type": "page"
