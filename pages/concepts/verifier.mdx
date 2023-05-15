@@ -1,5 +1,7 @@
 # Verifier Contract
 
-Satori (悟り) is a Japanese Buddhist term for awakening, "comprehension; understanding".
+The verifier contract is the main contract behind verifing and validating all possible legal chess moves. The verifier contract also determines the outcome of the game, whether it is a stalemate, or checkmate.
 
+The verifier contract has been tested on hundreds of thousands of games from lichess.org. For each game, the verifier contract has returned the same outcome as have other off-chain chess move verifiers. 
 
+Currently the verifier, by default auto-queens when a pawn reaches the other side of the board. 
