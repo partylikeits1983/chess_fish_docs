@@ -22,15 +22,6 @@ text: 'Chess.fish Docs',
     }
   },
 
-  head: (
-    <>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <meta property="og:title" content="Chess.fish" />
-      <meta property="og:description" content="Chess on the Blockchain" />
-      
-    </>
-  ),
-
   primaryHue: { dark: 155, light: 145},
 
   faviconGlyph: '♕'
