@@ -1,5 +1,6 @@
 {
   "index": "Introduction",
+  "purpose": "Purpose",
   "concepts": "Protocol Concepts",
   "guides": "Protocol Guides",
   "contracts": "Smart Contracts",
