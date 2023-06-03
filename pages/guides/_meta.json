@@ -3,5 +3,6 @@
     "accept": "Accept a Wager",
     "write": "Write Moves",
     "withdraw": "Withdraw wager",
-    "connect-mobile": "Connecting on Mobile"
+    "connectmobile": "Connecting on Mobile",
+    "faucet": "Faucet"
 }
