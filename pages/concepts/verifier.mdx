@@ -1,3 +1,5 @@
+import ChessBoard from './board';
+
 ## Verifier Contract
 
 The verifier contract is the main contract behind verifing and validating all possible legal chess moves. The verifier contract also determines the outcome of the game, whether it is a stalemate, or checkmate.
@@ -5,3 +7,13 @@ The verifier contract is the main contract behind verifing and validating all po
 The verifier contract has been tested on hundreds of thousands of games from lichess.org. For each game, the verifier contract has returned the same outcome as have other off-chain chess move verifiers. 
 
 Currently the verifier, by default auto-queens when a pawn reaches the other side of the board. 
+
+
+### MoveVerifier board visualizer function
+The MoveVerifier contract stores the chessboard state as a uint256 value. Go to [polygonscan](https://mumbai.polygonscan.com/address/0x56369f7ab5163e4b75683b8eca9bd048ccae97c1#readContract#F15) and input the uin256 gameState you want to get the state for. Copy the resulting string, and paste it into the input box below.
+
+
+Test input string: Q,.,,.,N,R,r,b,,b,.,.,,Q,,r,q,p,,,B,Q,N,R,,n,b,N,,k,b,,K,R,P,Q,r,N,Q,p,.,.,.,.,.,.,.,K,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.
+
+#### Input:
+<ChessBoard />
