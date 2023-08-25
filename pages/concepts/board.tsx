@@ -8,11 +8,7 @@ const ChessBoard: React.FC = () => {
   const generateBoard = (input: string[]) => {
 
     let result = Object.values(input);
-
-
     let pieces = result.reverse();
-
-
 
     let boardString = "   +------------------------+\n ";
     for (let i = 0; i < 64; i++) {
