@@ -1,10 +1,19 @@
+import { C } from 'nextra/dist/types-fa5ec8b0';
 import React, { useState } from 'react';
 
 const ChessBoard: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [board, setBoard] = useState('');
 
-  const generateBoard = (pieces: string[]) => {
+  const generateBoard = (input: string[]) => {
+
+    let result = Object.values(input);
+
+
+    let pieces = result.reverse();
+
+
+
     let boardString = "   +------------------------+\n ";
     for (let i = 0; i < 64; i++) {
       if (i % 8 === 0) {
@@ -26,8 +35,9 @@ const ChessBoard: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
-    generateBoard(e.target.value.split(''));
+    generateBoard(e.target.value.split(","));
   };
+  
 
   return (
     <div>
