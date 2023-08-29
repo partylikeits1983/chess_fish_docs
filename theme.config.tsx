@@ -9,7 +9,7 @@ project: {
 link: 'https://github.com/partylikeits1983',
 },
 chat: {
-  link: 'https://twitter.com/alexanderlee314',
+  link: 'https://twitter.com/evmchess',
   icon: (
     <svg width="24" height="24" viewBox="0 0 248 204">
       <path
