@@ -1,19 +1,11 @@
 # Solidity API
 
-## IChessFishNFT
+## ChessWager
 
 https://github.com/partylikeits1983
 
 _This contract handles the logic for storing wagers between users, storing game moves, and handling the payout of 1v1 matches.
 The Tournament Contract is able to call into this contract to create matches between users._
-
-### awardWinner
-
-```solidity
-function awardWinner(address player, address wagerHash) external returns (uint256)
-```
-
-## ChessWager
 
 ### GameWager
 
@@ -132,7 +124,7 @@ constructor(address moveVerificationAddress, address _ChessFishToken, address _D
 ### createGameWagerEvent
 
 ```solidity
-event createGameWagerEvent(address wager, address player1, address wagerToken, uint256 wagerAmount, uint256 timeLimit, uint256 numberOfGames)
+event createGameWagerEvent(address wager, address wagerToken, uint256 wagerAmount, uint256 timeLimit, uint256 numberOfGames)
 ```
 
 ### acceptWagerEvent
@@ -201,11 +193,18 @@ function getNumberOfGamesPlayed(address wagerAddress) internal view returns (uin
 function getWagerStatus(address wagerAddress) external view returns (address, address, uint256, uint256)
 ```
 
-### getWagerAddress
+Get Wager Status
 
-```solidity
-function getWagerAddress(struct ChessWager.GameWager wager) internal view returns (address)
-```
+_returns the status of the wager_
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | address | (address, address, uint, uint) address player0, address player1, winsPlayer0, winsPlayer1 |
+| [1] | address |  |
+| [2] | uint256 |  |
+| [3] | uint256 |  |
 
 ### checkTimeRemaining
 
@@ -213,11 +212,36 @@ function getWagerAddress(struct ChessWager.GameWager wager) internal view return
 function checkTimeRemaining(address wagerAddress) public view returns (int256, int256)
 ```
 
+Checks how much time is remaining in game
+
+_using int to quickly check if game lost on time and to prevent underflow revert_
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | int256 | timeRemainingPlayer0, timeRemainingPlayer1 |
+| [1] | int256 |  |
+
 ### getPlayerMove
 
 ```solidity
 function getPlayerMove(address wagerAddress) public view returns (address)
 ```
+
+Gets the address of the player whose turn it is
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| wagerAddress | address | address of the wager |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | address | user |
 
 ### isPlayerWhite
 
@@ -225,11 +249,59 @@ function getPlayerMove(address wagerAddress) public view returns (address)
 function isPlayerWhite(address wagerAddress, address player) public view returns (bool)
 ```
 
+Returns boolean if player is white or not
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| wagerAddress | address | address of the wager |
+| player | address | address player |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | bool | bool |
+
 ### getGameStatus
 
 ```solidity
 function getGameStatus(address wagerAddress) public view returns (uint8, uint256, uint32, uint32)
 ```
+
+Gets the game status for the last played game in a wager
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| wagerAddress | address | address of the wager |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint8 | (outcome, gameState, player0State, player1State) |
+| [1] | uint256 |  |
+| [2] | uint32 |  |
+| [3] | uint32 |  |
+
+### getWagerAddress
+
+```solidity
+function getWagerAddress(struct ChessWager.GameWager wager) internal view returns (address)
+```
+
+Generates unique hash for a game wager
+
+_using keccak256 to generate a hash which is converted to an address_
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | address | address wagerAddress |
 
 ### TournamentHandler
 
@@ -249,11 +321,77 @@ modifier onlyTournament()
 function addTournamentHandler(address _tournamentHandler) external
 ```
 
-### createGameWagerTournament
+### startWagersInTournament
 
 ```solidity
-function createGameWagerTournament(address player0, address player1, address wagerToken, uint256 wager, uint256 timeLimit, uint256 numberOfGames) external returns (address wagerAddress)
+function startWagersInTournament(address wagerAddress) external
 ```
+
+### createGameWagerTournamentSingle
+
+```solidity
+function createGameWagerTournamentSingle(address player0, address player1, address wagerToken, uint256 wagerAmount, uint256 numberOfGames, uint256 timeLimit) external returns (address wagerAddress)
+```
+
+Function that creates a wager between two players
+
+_only the tournament contract can call_
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| wagerAddress | address | wager address |
+
+### generateMoveMessage
+
+```solidity
+function generateMoveMessage(address wager, uint16 move, uint256 moveNumber, uint256 expiration) public pure returns (bytes)
+```
+
+### decodeMoveMessage
+
+```solidity
+function decodeMoveMessage(bytes message) internal pure returns (address, uint16, uint256, uint256)
+```
+
+### getMessageHash
+
+```solidity
+function getMessageHash(address wager, uint16 move, uint256 moveNumber, uint256 expiration) public pure returns (bytes32)
+```
+
+### getEthSignedMessageHash
+
+```solidity
+function getEthSignedMessageHash(bytes32 _messageHash) internal pure returns (bytes32)
+```
+
+### verifyGameView
+
+```solidity
+function verifyGameView(bytes[] message, bytes[] signature) public view returns (address wager, uint8 outcome, uint16[] moves)
+```
+
+Verifies all signed messages and sigs in a for loop
+
+_reverts if invalid sig_
+
+### verifyGameUpdateState
+
+```solidity
+function verifyGameUpdateState(bytes[] message, bytes[] signature) external returns (bool)
+```
+
+Verifies game moves and updates the state of the wager
+
+### validate
+
+```solidity
+function validate(bytes32 messageHash, bytes[] signature, address signer, uint256 i) internal pure
+```
+
+Validates that the signed hash was signed by the player
 
 ### createGameWager
 
@@ -264,8 +402,10 @@ function createGameWager(address player1, address wagerToken, uint256 wager, uin
 ### acceptWager
 
 ```solidity
-function acceptWager(address wagerAddress) external payable
+function acceptWager(address wagerAddress) external
 ```
+
+player1 calls if they accept challenge
 
 ### playMove
 
@@ -273,11 +413,23 @@ function acceptWager(address wagerAddress) external payable
 function playMove(address wagerAddress, uint16 move) external returns (bool)
 ```
 
+Plays move on the board
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | bool | bool true if endGame, adds extra game if stalemate |
+
 ### payoutWager
 
 ```solidity
 function payoutWager(address wagerAddress) external returns (bool)
 ```
+
+handles payout of wager
+
+_smallest wager amount is 18 wei before fees => 0_
 
 ### cancelWager
 
@@ -285,25 +437,21 @@ function payoutWager(address wagerAddress) external returns (bool)
 function cancelWager(address wagerAddress) external returns (bool)
 ```
 
+Cancel wager
+
+_Cancel wager only if other player has not yet accepted
+&& only if msg.sender is one of the players_
+
 ### updateWagerStateTime
 
 ```solidity
 function updateWagerStateTime(address wagerAddress) public returns (bool)
 ```
 
-_check when called with timeout w tournament_
+Updates the state of the wager if player time is < 0
 
-### receive
-
-```solidity
-receive() external payable
-```
-
-### fallback
-
-```solidity
-fallback() external payable
-```
+_check when called with timeout w tournament
+Set to public so that anyone can update time if player disappears_
 
 ## MoveHelper
 
@@ -1033,7 +1181,6 @@ _Gets the piece at a given position in the current gameState.
 ## ChessFishTournament
 
 https://github.com/partylikeits1983
-Forked from: https://github.com/marioevz/chess.eth (Updated from Solidity 0.7.6 to 0.8.17 & Added features and functionality)
 
 This contract handles the functionality of creating Round Robbin style tournaments as well as handling the payouts of ERC-20 tokens to tournament winners.
 This contract creates wagers in the ChessWager smart contract and then reads the result of the created wagers to calculate the number of wins for each user in the tournament.
@@ -1194,8 +1341,12 @@ _returns addresses winners sorted by highest wins_
 ### createTournament
 
 ```solidity
-function createTournament(uint256 numberOfPlayers, uint256 numberOfGames, address token, uint256 tokenAmount, uint256 timeLimit) external
+function createTournament(uint256 numberOfPlayers, uint256 numberOfGames, address token, uint256 tokenAmount, uint256 timeLimit) external returns (uint256)
 ```
+
+Creates a Tournament
+
+_creates a tournament, and increases the global tournament nonce_
 
 ### joinTournament
 
@@ -1203,11 +1354,25 @@ function createTournament(uint256 numberOfPlayers, uint256 numberOfGames, addres
 function joinTournament(uint256 tournamentID) external
 ```
 
+Join tournament
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| tournamentID | uint256 | the tournamentID of the tournament that the user wants to join |
+
 ### startTournament
 
 ```solidity
 function startTournament(uint256 tournamentID) external
 ```
+
+starts the tournament
+
+_minimum number of players = 3
+if the number of players is greater than 3 and not equal to
+the maxNumber of players the tournament can start 1 day after creation_
 
 ### exitTournament
 
@@ -1215,19 +1380,19 @@ function startTournament(uint256 tournamentID) external
 function exitTournament(uint256 tournamentID) external
 ```
 
+user can exit tournament
+
+_user can exit if tournament is not in progress_
+
 ### payoutTournament
 
 ```solidity
 function payoutTournament(uint256 tournamentID) external
 ```
 
-### tallyWins
+handle payout of tournament
 
-```solidity
-function tallyWins(uint256 tournamentID) internal returns (address[], uint256[])
-```
-
-_used to calculate wins, saving score to storage._
+_tallies, gets payout profile, sorts players by wins, handles payout_
 
 ## IChessFishNFT
 
@@ -1239,10 +1404,16 @@ function awardWinner(address player, address wagerHash) external returns (uint25
 
 ## IChessWager
 
-### createGameWagerTournament
+### createGameWagerTournamentSingle
 
 ```solidity
-function createGameWagerTournament(address player0, address player1, address wagerToken, uint256 wager, uint256 timeLimit, uint256 numberOfGames) external returns (address)
+function createGameWagerTournamentSingle(address player0, address player1, address wagerToken, uint256 wagerAmount, uint256 numberOfGames, uint256 timeLimit) external returns (address wagerAddress)
+```
+
+### startWagersInTournament
+
+```solidity
+function startWagersInTournament(address wagerAddress) external
 ```
 
 ### getWagerStatus
@@ -1251,27 +1422,9 @@ function createGameWagerTournament(address player0, address player1, address wag
 function getWagerStatus(address wagerAddress) external view returns (address, address, uint256, uint256)
 ```
 
-## Math
-
-_Standard math utilities missing in the Solidity language._
-
-### max
-
-```solidity
-function max(uint8 a, uint8 b) internal pure returns (uint256)
-```
-
-_Returns the largest of two numbers._
-
-### min
-
-```solidity
-function min(uint8 a, uint8 b) internal pure returns (uint256)
-```
-
-_Returns the smallest of two numbers._
-
 ## Token
+
+_Test Token with large supply_
 
 ### _initial_supply
 
@@ -1295,6 +1448,76 @@ constructor() public
 
 ```solidity
 function mint(uint256 amount) external
+```
+
+## Math
+
+_Standard math utilities missing in the Solidity language._
+
+### max
+
+```solidity
+function max(uint8 a, uint8 b) internal pure returns (uint256)
+```
+
+_Returns the largest of two numbers._
+
+### min
+
+```solidity
+function min(uint8 a, uint8 b) internal pure returns (uint256)
+```
+
+_Returns the smallest of two numbers._
+
+## ChessFishNFT
+
+### wagerHashes
+
+```solidity
+mapping(uint256 => address) wagerHashes
+```
+
+### ChessWager
+
+```solidity
+address ChessWager
+```
+
+### deployer
+
+```solidity
+address deployer
+```
+
+### onlyChessFishWager
+
+```solidity
+modifier onlyChessFishWager()
+```
+
+### onlyDeployer
+
+```solidity
+modifier onlyDeployer()
+```
+
+### constructor
+
+```solidity
+constructor() public
+```
+
+### setChessFishAddress
+
+```solidity
+function setChessFishAddress(address _chessFish) external
+```
+
+### awardWinner
+
+```solidity
+function awardWinner(address player, address wagerHash) external returns (uint256)
 ```
 
 ## ChessFishToken
@@ -1538,54 +1761,4 @@ function releaseERC20(contract IERC20 token, address account) public
 _Triggers a transfer to `account` of the amount of `token` tokens they are owed, according to their
 percentage of the total shares and their previous withdrawals. `token` must be the address of an IERC20
 contract._
-
-## ChessFishNFT
-
-### wagerHashes
-
-```solidity
-mapping(address => address) wagerHashes
-```
-
-### ChessWager
-
-```solidity
-address ChessWager
-```
-
-### deployer
-
-```solidity
-address deployer
-```
-
-### onlyChessFishWager
-
-```solidity
-modifier onlyChessFishWager()
-```
-
-### onlyDeployer
-
-```solidity
-modifier onlyDeployer()
-```
-
-### constructor
-
-```solidity
-constructor() public
-```
-
-### setChessFishAddress
-
-```solidity
-function setChessFishAddress(address _chessFish) external
-```
-
-### awardWinner
-
-```solidity
-function awardWinner(address player, address wagerHash) external returns (uint256)
-```
 
