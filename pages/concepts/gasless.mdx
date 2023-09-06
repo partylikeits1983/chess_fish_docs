@@ -1,0 +1,66 @@
+## Gasless Games
+
+The ChessWager.sol contract has the ability to verify game moves in a gasless manner.
+
+- ChessWager.sol uses ECDSA signatures to ascertain the authenticity of moves without incurring gas fees for the signer.
+- The validation ensures that the game moves are signed by the correct player and are in the correct order.
+- Invalid moves or signatures lead to transaction reversion. 
+
+### Functions
+
+1. **generateMoveMessage**
+   - **Parameters**:
+     - `wager`: address indicating the wager associated with the move.
+     - `move`: uint16 indicating the player's move.
+     - `moveNumber`: uint indicating the sequential order of the move.
+     - `expiration`: uint representing the move's expiration timestamp.
+   - **Returns**: Encodes the provided details into a byte array.
+   - **Visibility**: Public
+
+2. **decodeMoveMessage**
+   - **Parameters**:
+     - `message`: bytes memory representing the encoded move message.
+   - **Returns**: Decoded details of the move (wager, move, moveNumber, expiration).
+   - **Visibility**: Internal
+
+3. **getMessageHash**
+   - **Parameters**:
+     - `wager`: address indicating the wager.
+     - `move`: uint16 indicating the move.
+     - `moveNumber`: uint indicating the move order.
+     - `expiration`: uint indicating the expiration timestamp.
+   - **Returns**: A hash derived from the encoded message.
+   - **Visibility**: Public
+
+4. **getEthSignedMessageHash**
+   - **Parameters**:
+     - `_messageHash`: bytes32 representing the hash of a move message.
+   - **Returns**: A hash which includes the provided message hash prefixed with the Ethereum signed message format.
+   - **Visibility**: Internal
+
+5. **verifyGameView**
+   - **Parameters**:
+     - `message`: Array of bytes representing encoded move messages.
+     - `signature`: Array of bytes representing signatures of the encoded move messages.
+   - **Returns**: 
+     - `wager`: address of the associated wager.
+     - `outcome`: uint8 indicating the game's outcome.
+     - `moves`: An array of moves played during the game.
+   - **Visibility**: Public
+
+6. **verifyGameUpdateState**
+   - **Parameters**:
+     - `message`: Array of bytes for encoded move messages.
+     - `signature`: Array of bytes for move message signatures.
+   - **Returns**: A boolean indicating if the game outcome is non-zero and the state of the wager was successfully updated.
+   - **Visibility**: External
+
+7. **validate**
+   - **Parameters**:
+     - `messageHash`: bytes32 representing the hash of a move message.
+     - `signature`: Array of bytes for the move message signatures.
+     - `signer`: address of the player who signed the message.
+     - `i`: uint index representing the position in the signature array.
+   - **Purpose**: Validates that the provided signature corresponds to the hash signed by the player.
+   - **Visibility**: Internal
+
