@@ -24,11 +24,21 @@ footer: {
 text: 'Chess.fish Docs',
 },
 
- useNextSeoProps() {
-    return {
-      titleTemplate: '%s – Chess.fish'
-    }
-  },
+useNextSeoProps() {
+  return {
+    titleTemplate: '%s – Chess.fish',
+    openGraph: {
+      images: [
+        {
+          url: 'https://www.pngkit.com/png/full/1-15534_queen-crown-png-free-download-queen-crown-png.png',
+          width: 800,
+          height: 600,
+          alt: 'Chess.Fish Docs Thumbnail',
+        },
+      ],
+    },
+  };
+},
 
   primaryHue: { dark: 155, light: 145},
 
