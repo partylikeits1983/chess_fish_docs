@@ -1,10 +1,16 @@
 import React from 'react'
 import { DocsThemeConfig } from 'nextra-theme-docs'
+import { text } from 'stream/consumers';
 
 const config: DocsThemeConfig = {
-logo:  <strong>Chess.Fish Docs</strong>
+logo:  <strong>Chess.Fish Docs</strong>,
 
-,
+head:  
+  <>
+    <meta name="description" content="chess on the blockchain" />
+  </>,
+
+
 project: {
 link: 'https://github.com/partylikeits1983',
 },
@@ -22,19 +28,21 @@ chat: {
 docsRepositoryBase: 'https://github.com/partylikeits1983',
 footer: {
 text: 'Chess.fish Docs',
+
 },
 
 useNextSeoProps() {
   return {
-    titleTemplate: '%s – Chess.fish',
+    titleTemplate: 'ChessFish Docs',
     openGraph: {
       images: [
         {
-          url: 'https://www.pngkit.com/png/full/1-15534_queen-crown-png-free-download-queen-crown-png.png',
+          url: 'tb1.png',
           width: 800,
           height: 600,
-          alt: 'Chess.Fish Docs Thumbnail',
+          alt: 'Chess.Fish Docs',
         },
+        
       ],
     },
   };
@@ -44,5 +52,7 @@ useNextSeoProps() {
 
   faviconGlyph: '♕'
 }
+
+
 
 export default config
