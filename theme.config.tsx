@@ -12,7 +12,7 @@ head:
 
 
 project: {
-link: 'https://github.com/partylikeits1983',
+link: 'https://github.com/Chess-Fish',
 },
 chat: {
   link: 'https://twitter.com/evmchess',
@@ -25,7 +25,7 @@ chat: {
     </svg>
   )
 },
-docsRepositoryBase: 'https://github.com/partylikeits1983',
+docsRepositoryBase: 'https://github.com/Chess-Fish',
 footer: {
 text: 'Chess.fish Docs',
 
