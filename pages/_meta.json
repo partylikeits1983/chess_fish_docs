@@ -1,8 +1,9 @@
 {
   "index": "Introduction",
   "purpose": "Purpose",
+  "guides": "Getting Started",
   "concepts": "Protocol Concepts",
-  "guides": "Protocol Guides",
+  "tokenomics": "Tokenomics",
   "contracts": "Smart Contracts",
   "about": {
     "title": "About",
