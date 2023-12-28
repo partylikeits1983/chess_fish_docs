@@ -1,3 +1,39 @@
 ## Tournaments
 
-Tournaments can have up to 25 players. More info coming soon, be sure to read the whitepaper.
+Tournaments on Chess.fish are a way to compete against more than one person. Tournaments allow the possibility for players to win significantly more than what they initially deposited to join the tournament. Currently all tournaments on ChessFish are Round Robin tournaments.
+
+
+
+### Payout Profiles
+_____
+
+<p align="center">
+  <img src="../PayoutProfiles.png" alt="Chess.Fish Tokenomics" width="700" height="500"/>
+</p>
+
+
+| Tournament Size | 1st Place | 2nd Place | 3rd Place | 4th Place | 5th Place | 6th Place | 7th Place |
+|-----------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+| 3 Players       | 56%       | 37%       | -         | -         | -         | -         | -         |
+| 4-9 Players     | 33%       | 29%       | 18%       | 13%       | -         | -         | -         |
+| 10-25 Players   | 36.5%     | 23%       | 13.5%     | 10%       | 5%        | 2.5%      | 2.5%      |
+
+
+The figure above shows the varing payout profiles for tournaments of different sizes. The payout profile is designed to maximize the number of winners in a tournament. 
+
+#### Example:
+
+>Let's suppose you join a tournament of 10 players where you are the 10th player. The entry fee for the tournament is 100 USDC.
+
+This means that the total tournament pool is 1000 USDC. 
+
+- The first place winner will receive 36.5% of the pool, which is 365 USDC.
+- The second place winner will receive 23% of the pool, which is 230 USDC.
+- The third place winner will receive 13.5% of the pool, which is 135 USDC.
+- ...and so on for other placements.
+
+Currently, all tournaments have a 7% fee, which is distributed to ChessFish token holders.
+
+____
+
+The ChessFish tournament contract contains logic for handling ERC20 transfers and payouts for tournaments. 

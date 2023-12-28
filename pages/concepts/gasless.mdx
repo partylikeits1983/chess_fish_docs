@@ -1,66 +1,28 @@
 ## Gasless Games
 
-The ChessWager.sol contract has the ability to verify game moves in a gasless manner.
+The ChessWager contract has the ability to verify game moves in a gasless manner. This means that players do not need to submit a transaction for each move on the chessboard.
 
-- ChessWager.sol uses ECDSA signatures to ascertain the authenticity of moves without incurring gas fees for the signer.
-- The validation ensures that the game moves are signed by the correct player and are in the correct order.
-- Invalid moves or signatures lead to transaction reversion. 
+The signed chess moves are stored off-chain until the game results in a checkmate. At this point the winner of the game submits the signed moves to the ChessWager contract, which verifies that the moves were signed by both parties and updates the state of the game accordingly.
 
-### Functions
+#### Game Delegation
 
-1. **generateMoveMessage**
-   - **Parameters**:
-     - `wager`: address indicating the wager associated with the move.
-     - `move`: uint16 indicating the player's move.
-     - `moveNumber`: uint indicating the sequential order of the move.
-     - `expiration`: uint representing the move's expiration timestamp.
-   - **Returns**: Encodes the provided details into a byte array.
-   - **Visibility**: Public
+To prevent metamask from interupting gameplay each time a player makes a move on the chessboard, users delegate their signature to a wallet generated on the ChessFish frontend. 
 
-2. **decodeMoveMessage**
-   - **Parameters**:
-     - `message`: bytes memory representing the encoded move message.
-   - **Returns**: Decoded details of the move (wager, move, moveNumber, expiration).
-   - **Visibility**: Internal
+Game delegation is achieved in the following steps: 
 
-3. **getMessageHash**
-   - **Parameters**:
-     - `wager`: address indicating the wager.
-     - `move`: uint16 indicating the move.
-     - `moveNumber`: uint indicating the move order.
-     - `expiration`: uint indicating the expiration timestamp.
-   - **Returns**: A hash derived from the encoded message.
-   - **Visibility**: Public
+- The user signs the string of the game address. 
+- The signed message data is hashed.
+- The hash is used as a deterministic seed for generating a new wallet mnemonic.
+- The new wallet signs the game moves under the hood, without the user's metamask requesting a signature for each move.
+- The signature delegation data is passed to the smart contract when submitting all the moves to verify that the user did indeed delegate their signature.
 
-4. **getEthSignedMessageHash**
-   - **Parameters**:
-     - `_messageHash`: bytes32 representing the hash of a move message.
-   - **Returns**: A hash which includes the provided message hash prefixed with the Ethereum signed message format.
-   - **Visibility**: Internal
+____
 
-5. **verifyGameView**
-   - **Parameters**:
-     - `message`: Array of bytes representing encoded move messages.
-     - `signature`: Array of bytes representing signatures of the encoded move messages.
-   - **Returns**: 
-     - `wager`: address of the associated wager.
-     - `outcome`: uint8 indicating the game's outcome.
-     - `moves`: An array of moves played during the game.
-   - **Visibility**: Public
+## How it works:
 
-6. **verifyGameUpdateState**
-   - **Parameters**:
-     - `message`: Array of bytes for encoded move messages.
-     - `signature`: Array of bytes for move message signatures.
-   - **Returns**: A boolean indicating if the game outcome is non-zero and the state of the wager was successfully updated.
-   - **Visibility**: External
+- ChessWager.sol uses ECDSA signatures to determine the authenticity of the submitted moves.
+- The move verification contract ensures that the game moves are signed by the correct player and are in the correct order.
+- Invalid chess moves or signatures lead to transaction reversion.
+_____
 
-7. **validate**
-   - **Parameters**:
-     - `messageHash`: bytes32 representing the hash of a move message.
-     - `signature`: Array of bytes for the move message signatures.
-     - `signer`: address of the player who signed the message.
-     - `i`: uint index representing the position in the signature array.
-   - **Purpose**: Validates that the provided signature corresponds to the hash signed by the player.
-   - **Visibility**: Internal
-
+The ChessFish contracts use the ERC-712 standard to implement typed signatures.

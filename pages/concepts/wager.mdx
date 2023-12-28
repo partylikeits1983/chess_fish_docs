@@ -1,5 +1,10 @@
 ## Wager Contract
 
-The wager contract handles the main logic of handling the payouts of the players. It keeps track of how many wins and losses are in a wager between two players.
+The Wager contract handles the main logic of handling the payouts of the players for 1v1 games. The wager contract keeps track of how many wins and losses are in a series of games between two players.
 
-The wager contract also checks if each player has sufficient time to continue playing the game.  
+The wager contract also checks if each player has sufficient time to continue playing the game. 
+
+> Currently, the time limit for a chess wager is the entire time limit for all games in the wager. 
+
+Suppose you are playing wager with 5 games with a time limit of 5 hours. The time limit of 5 hours per player is for all games, not per game. 
+> So if you spend 4 hours and 30 minutes on the first game, you have 30 minutes for the remaining 4 games.
