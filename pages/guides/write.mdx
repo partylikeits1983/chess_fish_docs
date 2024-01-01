@@ -1,3 +1,25 @@
-## Write Moves
+## Playing Moves
 
-The process of playing a move is handled by the "playMove" function in the Chess.fish wager contract. Squares are encoded as uint8 integers and a move is encoded as a uint16 integer, where the first 8 bits are the square from, and the last 8 bits are the square to. 
+<video width="520" height="340" controls>
+  <source src="/guides/write/firstgame.mp4" type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
+
+#### Making Moves on the Chess Board
+To play moves on the chess board, follow these steps:
+1. **Share Public Encryption Key:** Used to encrypt delegated game wallets.
+2. **Sign 'wagerAddress' String:** Used as a seed for generating a game public private key pair.
+3. **Sign Wallet Delegation Data Type:** This step ensures your wallet delegated signing authority to the generated wallet.
+
+This process allows for a seamless gameplay experience, eliminating the need for constant Metamask pop-ups for each move.
+
+**Submitting Moves:**
+- To write the signed moves directly to the smart contract, use the "Submit Moves" button.
+- After each game, one of the players must submit the moves on-chain to ensure fair gameplay.
+- Note: In future versions of ChessFish, it may be possible to submit games after the completion of the entire wager.
+
+#### Writing Moves Directly to the Smart Contract
+If you prefer not to store signed moves off-chain and wish to write moves directly to the smart contract:
+- Disable the "Gasless Game" option in the UI.
+
+>Note: The process of playing a move is handled by the "playMove" function in the Chess.fish wager contract. Squares are encoded as uint8 integers and a move is encoded as a uint16 integer, where the first 8 bits are the square from, and the last 8 bits are the square to. 
