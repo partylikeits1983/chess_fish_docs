@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, CSSProperties } from 'react';
 
 export const DividendCalculator = () => {
   const [monthlyVolume, setMonthlyVolume] = useState('');
@@ -24,7 +24,7 @@ export const DividendCalculator = () => {
   };
   
 
-  const calculatorStyle = {
+  const calculatorStyle: CSSProperties = {
     padding: '20px',
     border: '1px solid #ddd',
     borderRadius: '10px',
@@ -42,9 +42,9 @@ export const DividendCalculator = () => {
     width: '100%'
   };
   
-  const labelStyle = {
+  const labelStyle: CSSProperties = {
     width: '30%', // Adjust this value as needed
-    textAlign: 'left',
+    textAlign: 'left', // TypeScript should recognize this as a valid value for TextAlign
     paddingRight: '5px' // Adds space between label and input
   };
   
@@ -62,7 +62,7 @@ export const DividendCalculator = () => {
     cursor: 'pointer'
   };
 
-  const revenueStyle = {
+  const revenueStyle: CSSProperties = {
     marginTop: '10px',
     display: 'flex',
     flexDirection: 'column',
