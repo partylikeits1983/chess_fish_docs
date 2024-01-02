@@ -2,5 +2,6 @@
     "create": "Create a Wager",
     "accept": "Accept a Wager",
     "write": "First Game",
-    "withdraw": "Withdraw wager"
+    "withdraw": "Withdraw wager",
+    "tournament": "Tournaments"
 }
