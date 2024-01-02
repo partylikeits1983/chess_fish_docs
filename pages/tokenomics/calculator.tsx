@@ -7,20 +7,22 @@ export const DividendCalculator = () => {
   const [yearlyRevenue, setYearlyRevenue] = useState(0);
 
   const calculateRevenue = () => {
-    const calculatedRevenue = (Number(monthlyVolume) || 0) * 0.07 * ((Number(ownershipPercentage) || 0) / 100);
+    const volume = Number(monthlyVolume) || 0;
+    const ownership = Number(ownershipPercentage) || 0;
+    const calculatedRevenue = volume * 0.07 * (ownership / 100);
     setMonthlyRevenue(calculatedRevenue);
     setYearlyRevenue(calculatedRevenue * 12);
   };
+  
 
   const handleMonthlyVolumeChange = (e) => {
-    const value = e.target.value;
-    setMonthlyVolume(value === '' ? '' : Number(value));
+    setMonthlyVolume(e.target.value);
   };
-
+  
   const handleOwnershipPercentageChange = (e) => {
-    const value = e.target.value;
-    setOwnershipPercentage(value === '' ? '' : Number(value));
+    setOwnershipPercentage(e.target.value);
   };
+  
 
   const calculatorStyle = {
     padding: '20px',
