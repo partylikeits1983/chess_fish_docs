@@ -1,7 +1,7 @@
 {
     "create": "Create a Wager",
     "accept": "Accept a Wager",
-    "write": "First Game",
+    "gameplay": "Starting a Game",
     "withdraw": "Withdraw wager",
     "tournament": "Tournaments"
 }
