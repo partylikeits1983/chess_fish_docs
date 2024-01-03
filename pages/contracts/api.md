@@ -2,10 +2,11 @@
 
 ## ChessWager
 
-https://github.com/partylikeits1983
+https://github.com/Chess-Fish
 
-_This contract handles the logic for storing wagers between users, storing game moves, and handling the payout of 1v1 matches.
-The Tournament Contract is able to call into this contract to create matches between users._
+_This contract is designed for managing chess wagers between users, saving
+game moves, and handling the payout of 1v1 matches. The Tournament
+Contract can call into this contract to create tournament matches among users._
 
 ### GameWager
 
@@ -22,6 +23,8 @@ struct GameWager {
   uint256 timePlayer0;
   uint256 timePlayer1;
   bool isTournament;
+  bool isComplete;
+  bool hasBeenPaid;
 }
 ```
 
@@ -43,6 +46,20 @@ struct Game {
 }
 ```
 
+### GaslessMoveData
+
+```solidity
+struct GaslessMoveData {
+  address signer;
+  address player0;
+  address player1;
+  uint16 move;
+  uint256 moveNumber;
+  uint256 expiration;
+  bytes32 messageHash;
+}
+```
+
 ### gameWagers
 
 ```solidity
@@ -50,6 +67,14 @@ mapping(address => struct ChessWager.GameWager) gameWagers
 ```
 
 _address wager => GameWager_
+
+### wagerPrizes
+
+```solidity
+mapping(address => uint256) wagerPrizes
+```
+
+_address wager => WagerPrize_
 
 ### games
 
@@ -73,7 +98,7 @@ _address wager => gameIDs_
 mapping(address => struct ChessWager.WagerStatus) wagerStatus
 ```
 
-_addres wager => Player Wins_
+_address wager => Player Wins_
 
 ### userGames
 
@@ -115,10 +140,18 @@ address ChessFishNFT
 
 _ChessFish Winner NFT contract_
 
+### gaslessGame
+
+```solidity
+contract GaslessGame gaslessGame
+```
+
+_Gasless Game Helper Contract_
+
 ### constructor
 
 ```solidity
-constructor(address moveVerificationAddress, address _ChessFishToken, address _DividendSplitter, address _ChessFishNFT) public
+constructor(address moveVerificationAddress, address _GaslessGame, address _DividendSplitter, address _ChessFishNFT) public
 ```
 
 ### createGameWagerEvent
@@ -181,30 +214,54 @@ function getGameLength(address wagerAddress) external view returns (uint256)
 function getGameMoves(address wagerAddress, uint256 gameID) external view returns (struct ChessWager.Game)
 ```
 
+### getLatestGameMoves
+
+```solidity
+function getLatestGameMoves(address wagerAddress) external view returns (uint16[])
+```
+
 ### getNumberOfGamesPlayed
 
 ```solidity
 function getNumberOfGamesPlayed(address wagerAddress) internal view returns (uint256)
 ```
 
+### getGameWagers
+
+```solidity
+function getGameWagers(address wagerAddress) external view returns (struct ChessWager.GameWager)
+```
+
+### getWagerPlayers
+
+```solidity
+function getWagerPlayers(address wagerAddress) external view returns (address, address)
+```
+
 ### getWagerStatus
 
 ```solidity
-function getWagerStatus(address wagerAddress) external view returns (address, address, uint256, uint256)
+function getWagerStatus(address wagerAddress) public view returns (address, address, uint256, uint256)
 ```
 
 Get Wager Status
 
-_returns the status of the wager_
+_Returns the current status of a specific wager._
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| wagerAddress | address | The address of the wager for which the status is being requested. |
 
 #### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | address | (address, address, uint, uint) address player0, address player1, winsPlayer0, winsPlayer1 |
-| [1] | address |  |
-| [2] | uint256 |  |
-| [3] | uint256 |  |
+| [0] | address | player0 The address of the first player in the wager. |
+| [1] | address | player1 The address of the second player in the wager. |
+| [2] | uint256 | winsPlayer0 The number of wins recorded for player0. |
+| [3] | uint256 | winsPlayer1 The number of wins recorded for player1. |
 
 ### checkTimeRemaining
 
@@ -220,8 +277,8 @@ _using int to quickly check if game lost on time and to prevent underflow revert
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | int256 | timeRemainingPlayer0, timeRemainingPlayer1 |
-| [1] | int256 |  |
+| [0] | int256 | timeRemainingPlayer0 |
+| [1] | int256 | timeRemainingPlayer1 |
 
 ### getPlayerMove
 
@@ -241,7 +298,7 @@ Gets the address of the player whose turn it is
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | address | user |
+| [0] | address | playerAddress |
 
 ### isPlayerWhite
 
@@ -262,7 +319,7 @@ Returns boolean if player is white or not
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | bool | bool |
+| [0] | bool | isPlayerWhite |
 
 ### getGameStatus
 
@@ -282,10 +339,26 @@ Gets the game status for the last played game in a wager
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | uint8 | (outcome, gameState, player0State, player1State) |
-| [1] | uint256 |  |
-| [2] | uint32 |  |
-| [3] | uint32 |  |
+| [0] | uint8 | outcome, |
+| [1] | uint256 | gameState |
+| [2] | uint32 | player0State |
+| [3] | uint32 | player1State |
+
+### getChainId
+
+```solidity
+function getChainId() internal view returns (uint256)
+```
+
+Returns chainId
+
+_used for ensuring unique hash independent of chain_
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint256 | chainId |
 
 ### getWagerAddress
 
@@ -301,7 +374,35 @@ _using keccak256 to generate a hash which is converted to an address_
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | address | address wagerAddress |
+| [0] | address | wagerAddress |
+
+### verifyGameUpdateState
+
+```solidity
+function verifyGameUpdateState(bytes[] message, bytes[] signature) external returns (bool)
+```
+
+Verifies game moves and updates the state of the wager
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | bool | isEndGame |
+
+### verifyGameUpdateStateDelegated
+
+```solidity
+function verifyGameUpdateStateDelegated(bytes[2] delegations, bytes[] messages, bytes[] signatures) external returns (bool)
+```
+
+Verifies game moves and updates the state of the wager
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | bool | isEndGame |
 
 ### TournamentHandler
 
@@ -321,11 +422,15 @@ modifier onlyTournament()
 function addTournamentHandler(address _tournamentHandler) external
 ```
 
+Adds Tournament contract
+
 ### startWagersInTournament
 
 ```solidity
 function startWagersInTournament(address wagerAddress) external
 ```
+
+Starts tournament wagers
 
 ### createGameWagerTournamentSingle
 
@@ -333,7 +438,7 @@ function startWagersInTournament(address wagerAddress) external
 function createGameWagerTournamentSingle(address player0, address player1, address wagerToken, uint256 wagerAmount, uint256 numberOfGames, uint256 timeLimit) external returns (address wagerAddress)
 ```
 
-Function that creates a wager between two players
+Creates a wager between two players
 
 _only the tournament contract can call_
 
@@ -341,57 +446,7 @@ _only the tournament contract can call_
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| wagerAddress | address | wager address |
-
-### generateMoveMessage
-
-```solidity
-function generateMoveMessage(address wager, uint16 move, uint256 moveNumber, uint256 expiration) public pure returns (bytes)
-```
-
-### decodeMoveMessage
-
-```solidity
-function decodeMoveMessage(bytes message) internal pure returns (address, uint16, uint256, uint256)
-```
-
-### getMessageHash
-
-```solidity
-function getMessageHash(address wager, uint16 move, uint256 moveNumber, uint256 expiration) public pure returns (bytes32)
-```
-
-### getEthSignedMessageHash
-
-```solidity
-function getEthSignedMessageHash(bytes32 _messageHash) internal pure returns (bytes32)
-```
-
-### verifyGameView
-
-```solidity
-function verifyGameView(bytes[] message, bytes[] signature) public view returns (address wager, uint8 outcome, uint16[] moves)
-```
-
-Verifies all signed messages and sigs in a for loop
-
-_reverts if invalid sig_
-
-### verifyGameUpdateState
-
-```solidity
-function verifyGameUpdateState(bytes[] message, bytes[] signature) external returns (bool)
-```
-
-Verifies game moves and updates the state of the wager
-
-### validate
-
-```solidity
-function validate(bytes32 messageHash, bytes[] signature, address signer, uint256 i) internal pure
-```
-
-Validates that the signed hash was signed by the player
+| wagerAddress | address | created wager address |
 
 ### createGameWager
 
@@ -399,13 +454,15 @@ Validates that the signed hash was signed by the player
 function createGameWager(address player1, address wagerToken, uint256 wager, uint256 timeLimit, uint256 numberOfGames) external payable returns (address wagerAddress)
 ```
 
+Creates a 1v1 chess wager
+
 ### acceptWager
 
 ```solidity
 function acceptWager(address wagerAddress) external
 ```
 
-player1 calls if they accept challenge
+Player1 calls if they accept challenge
 
 ### playMove
 
@@ -427,19 +484,27 @@ Plays move on the board
 function payoutWager(address wagerAddress) external returns (bool)
 ```
 
-handles payout of wager
+Handles payout of wager
 
 _smallest wager amount is 18 wei before fees => 0_
+
+### mintWinnerNFT
+
+```solidity
+function mintWinnerNFT(address wagerAddress) external
+```
+
+mint tournament winner NFT
 
 ### cancelWager
 
 ```solidity
-function cancelWager(address wagerAddress) external returns (bool)
+function cancelWager(address wagerAddress) external
 ```
 
 Cancel wager
 
-_Cancel wager only if other player has not yet accepted
+_cancel wager only if other player has not yet accepted
 && only if msg.sender is one of the players_
 
 ### updateWagerStateTime
@@ -451,13 +516,271 @@ function updateWagerStateTime(address wagerAddress) public returns (bool)
 Updates the state of the wager if player time is < 0
 
 _check when called with timeout w tournament
-Set to public so that anyone can update time if player disappears_
+set to public so that anyone can update time if player disappears_
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | bool | wasUpdated returns true if status was updated |
+
+### updateWagerStateInsufficientMaterial
+
+```solidity
+function updateWagerStateInsufficientMaterial(address wagerAddress) public returns (bool)
+```
+
+Update wager state if insufficient material
+
+_set to public so that anyone can update_
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | bool | wasUpdated returns true if status was updated |
+
+### depositToWager
+
+```solidity
+function depositToWager(address wagerAddress, uint256 amount) external
+```
+
+Deposits prize to wager address
+
+_used to deposit prizes to wager_
+
+## GaslessGame
+
+https://github.com/Chess-Fish
+
+This smart contract is designed to handle gasless game moves. Key features include:
+
+1. Off-Chain Move Signing: This contract enables game moves to be signed off-chain,
+   significantly reducing the need for constant on-chain transactions. This approach
+   substantially lowers transaction costs.
+
+2. Delegated Signer Functionality: Players have the option to delegate a signer
+   (generated on the front end) to execute moves on their behalf. This delegated
+   signer functionality reduces the frequency of wallet signature requests,
+   providing a smoother and more uninterrupted gameplay experience. It ensures
+   that players can focus on strategy rather than managing transaction confirmations.
+
+### GaslessMove
+
+```solidity
+struct GaslessMove {
+  address wagerAddress;
+  uint256 gameNumber;
+  uint256 moveNumber;
+  uint16 move;
+  uint256 expiration;
+}
+```
+
+### GaslessMoveData
+
+```solidity
+struct GaslessMoveData {
+  address signer;
+  address player0;
+  address player1;
+  struct GaslessGame.GaslessMove move;
+  bytes signature;
+}
+```
+
+### Delegation
+
+```solidity
+struct Delegation {
+  address delegatorAddress;
+  address delegatedAddress;
+  address wagerAddress;
+}
+```
+
+### SignedDelegation
+
+```solidity
+struct SignedDelegation {
+  struct GaslessGame.Delegation delegation;
+  bytes signature;
+}
+```
+
+### moveVerification
+
+```solidity
+contract MoveVerification moveVerification
+```
+
+_MoveVerification contract_
+
+### chessWager
+
+```solidity
+contract ChessWager chessWager
+```
+
+### deployer
+
+```solidity
+address deployer
+```
+
+_address deployer_
+
+### MOVE_METHOD_HASH
+
+```solidity
+bytes32 MOVE_METHOD_HASH
+```
+
+_EIP-712 typed move signature_
+
+### DELEGATION_METHOD_HASH
+
+```solidity
+bytes32 DELEGATION_METHOD_HASH
+```
+
+_EIP-712 typed delegation signature_
+
+### onlyDeployer
+
+```solidity
+modifier onlyDeployer()
+```
+
+### constructor
+
+```solidity
+constructor(address moveVerificationAddress) public
+```
+
+### setChessWager
+
+```solidity
+function setChessWager(address _chessWager) external
+```
+
+set ChessWager contract
+
+### encodeMoveMessage
+
+```solidity
+function encodeMoveMessage(struct GaslessGame.GaslessMove move) external pure returns (bytes)
+```
+
+Generates gasless move message
+
+### decodeMoveMessage
+
+```solidity
+function decodeMoveMessage(bytes message) internal pure returns (struct GaslessGame.GaslessMove move)
+```
+
+Decodes gasless move message
+
+### decodeWagerAddress
+
+```solidity
+function decodeWagerAddress(bytes message) internal pure returns (address)
+```
+
+Decodes gasless move message and returns wager address
+
+### verifyMoveSigner
+
+```solidity
+function verifyMoveSigner(struct GaslessGame.GaslessMoveData moveData, bytes signature) internal view
+```
+
+_typed signature verification_
+
+### verifyMoves
+
+```solidity
+function verifyMoves(address playerToMove, struct GaslessGame.GaslessMoveData moveData, bytes[] messages, bytes[] signatures) internal view returns (uint16[] moves)
+```
+
+Verifies signed messages and signatures in for loop
+
+_returns array of the gasless moves_
+
+### verifyGameView
+
+```solidity
+function verifyGameView(bytes[] messages, bytes[] signatures) public view returns (address wagerAddress, uint8 outcome, uint16[] moves)
+```
+
+Verifies all signed messages and signatures
+
+_appends onchain moves to gasless moves
+reverts if invalid signature_
+
+### createDelegation
+
+```solidity
+function createDelegation(address delegatorAddress, address delegatedAddress, address wagerAddress) external pure returns (struct GaslessGame.Delegation)
+```
+
+Create delegation data type helper function
+
+### encodeSignedDelegation
+
+```solidity
+function encodeSignedDelegation(struct GaslessGame.Delegation delegation, bytes signature) external pure returns (bytes)
+```
+
+Encode signed delegation helper function
+
+### decodeSignedDelegation
+
+```solidity
+function decodeSignedDelegation(bytes signedDelegationBytes) public pure returns (struct GaslessGame.SignedDelegation signedDelegation)
+```
+
+Decode Signed Delegation
+
+### checkIfAddressesArePlayers
+
+```solidity
+function checkIfAddressesArePlayers(address delegator0, address delegator1, address wagerAddress) internal view
+```
+
+Check if delegators match players in wagerAddress
+
+### checkDelegations
+
+```solidity
+function checkDelegations(struct GaslessGame.SignedDelegation signedDelegation0, struct GaslessGame.SignedDelegation signedDelegation1) internal view
+```
+
+Check delegations
+
+### verifyDelegation
+
+```solidity
+function verifyDelegation(struct GaslessGame.SignedDelegation signedDelegation) internal view
+```
+
+_typed signature verification_
+
+### verifyGameViewDelegated
+
+```solidity
+function verifyGameViewDelegated(bytes[2] delegations, bytes[] messages, bytes[] signatures) external view returns (address wagerAddress, uint8 outcome, uint16[] moves)
+```
+
+Verify game moves via delegated signature
 
 ## MoveHelper
 
-https://github.com/partylikeits1983
+https://github.com/Chess-Fish
 
-_This contract handles move conversion functionality to the MoveVerifican contract as well as admin functionality._
+_This contract handles move conversion functionality to the MoveVerification contract as well as setting board coordinates._
 
 ### pieces
 
@@ -509,14 +832,6 @@ _5% fee to token holders_
 modifier OnlyDeployer()
 ```
 
-### updateFee
-
-```solidity
-function updateFee(uint256 _fee) external
-```
-
-_update fee function for 1v1 matches_
-
 ### initCoordinates
 
 ```solidity
@@ -540,9 +855,19 @@ This function significantly increases the size of the compiled bytecode..._
 function getLetter(uint8 piece) public view returns (string)
 ```
 
-_Convert the number of a piece to the string character
-        @param piece is the number of the piece
-        @return string is the letter of the piece_
+_Convert the number of a piece to the string character_
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| piece | uint8 | is the number of the piece |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | string | string is the letter of the piece |
 
 ### convertFromMove
 
@@ -550,9 +875,20 @@ _Convert the number of a piece to the string character
 function convertFromMove(uint16 move) public pure returns (uint8, uint8)
 ```
 
-_Converts a move from a 16-bit integer to a 2 8-bit integers.
-        @param move is the move to convert
-        @return fromPos and toPos_
+_Converts a move from a 16-bit integer to a 2 8-bit integers._
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| move | uint16 | is the move to convert |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint8 | fromPos and toPos |
+| [1] | uint8 |  |
 
 ### convertToMove
 
@@ -560,10 +896,20 @@ _Converts a move from a 16-bit integer to a 2 8-bit integers.
 function convertToMove(uint8 fromPos, uint8 toPos) public pure returns (uint16)
 ```
 
-_Converts two 8-bit integers to a 16-bit integer
-        @param fromPos is the position to move a piece from.
-        @param toPos is the position to move a piece to.
-        @return move_
+_Converts two 8-bit integers to a 16-bit integer_
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| fromPos | uint8 | is the position to move a piece from. |
+| toPos | uint8 | is the position to move a piece to. |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint16 | move |
 
 ### moveToHex
 
@@ -571,9 +917,19 @@ _Converts two 8-bit integers to a 16-bit integer
 function moveToHex(string move) external view returns (uint16 hexMove)
 ```
 
-_Converts an algebraic chess notation string move to uint16 format
-        @param move is the move to convert i.e. e2e4 to hex move
-        @return hexMove is the resulting uint16 value_
+_Converts an algebraic chess notation string move to uint16 format_
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| move | string | is the move to convert i.e. e2e4 to hex move |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| hexMove | uint16 | is the resulting uint16 value |
 
 ### hexToMove
 
@@ -581,9 +937,19 @@ _Converts an algebraic chess notation string move to uint16 format
 function hexToMove(uint16 hexMove) public view returns (string move)
 ```
 
-_Converts a uint16 hex value to move in algebraic chess notation
-        @param hexMove is the move to convert to string 
-        @return move is the resulting string value_
+_Converts a uint16 hex value to move in algebraic chess notation_
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| hexMove | uint16 | is the move to convert to string |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| move | string | is the resulting string value |
 
 ### getBoard
 
@@ -592,16 +958,26 @@ function getBoard(uint256 gameState) external view returns (string[64])
 ```
 
 _returns string of letters representing the board
-        @dev only to be called by user or ui
-        @param gameState is the uint256 game state of the board 
-        @return string[64] is the resulting array_
+only to be called by user or ui_
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| gameState | uint256 | is the uint256 game state of the board |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | string[64] | string[64] is the resulting array |
 
 ## MoveVerification
 
-https://github.com/partylikeits1983
-Forked from: https://github.com/marioevz/chess.eth (Updated from Solidity 0.7.6 to 0.8.17 & Added features and functionality)
-
+https://github.com/Chess-Fish
 This contract handles the logic for verifying the validity moves on the chessboard. Currently, pawns autoqueen by default.
+
+_Forked from: https://github.com/marioevz/chess.eth (Updated from Solidity 0.7.6 to 0.8.17 & Added features and functionality)_
 
 ### empty_const
 
@@ -1129,6 +1505,16 @@ _Checks if a piece at the given position is under attack in the given game state
     @param pos The position of the piece to check for attack.
     @return A boolean indicating whether the piece at the given position is under attack._
 
+### isStalemateViaInsufficientMaterial
+
+```solidity
+function isStalemateViaInsufficientMaterial(uint256 gameState) public pure returns (bool)
+```
+
+_Checks if gameState has insufficient material
+        @param gameState current game state
+        @return isInsufficient returns true if insufficient material_
+
 ### commitMove
 
 ```solidity
@@ -1180,10 +1566,70 @@ _Gets the piece at a given position in the current gameState.
 
 ## ChessFishTournament
 
-https://github.com/partylikeits1983
+https://github.com/Chess-Fish
 
 This contract handles the functionality of creating Round Robbin style tournaments as well as handling the payouts of ERC-20 tokens to tournament winners.
 This contract creates wagers in the ChessWager smart contract and then reads the result of the created wagers to calculate the number of wins for each user in the tournament.
+
+### Tournament
+
+```solidity
+struct Tournament {
+  uint256 numberOfPlayers;
+  address[] authed_players;
+  address[] joined_players;
+  bool isByInvite;
+  uint256 numberOfGames;
+  address token;
+  uint256 tokenAmount;
+  uint256 prizePool;
+  bool isInProgress;
+  uint256 startTime;
+  uint256 timeLimit;
+  bool isComplete;
+}
+```
+
+### PlayerWins
+
+```solidity
+struct PlayerWins {
+  address player;
+  uint256 wins;
+}
+```
+
+### protocolFee
+
+```solidity
+uint256 protocolFee
+```
+
+_7% protocol fee_
+
+### payoutProfile3
+
+```solidity
+uint256[3] payoutProfile3
+```
+
+_56% 37%_
+
+### payoutProfile4_9
+
+```solidity
+uint256[4] payoutProfile4_9
+```
+
+_33% 29% 18% 13%_
+
+### payoutProfile10_25
+
+```solidity
+uint256[7] payoutProfile10_25
+```
+
+_36.5% 23% 13.5% 10% 5% 2.5% 2.5%_
 
 ### tournamentNonce
 
@@ -1209,70 +1655,13 @@ mapping(uint256 => address[]) tournamentWagerAddresses
 
 _uint tournament nonce => address[] wagerIDs_
 
-### Tournament
-
-```solidity
-struct Tournament {
-  uint256 numberOfPlayers;
-  address[] players;
-  uint256 numberOfGames;
-  address token;
-  uint256 tokenAmount;
-  bool isInProgress;
-  uint256 startTime;
-  uint256 timeLimit;
-  bool isComplete;
-}
-```
-
-### PlayerWins
-
-```solidity
-struct PlayerWins {
-  address player;
-  uint256 wins;
-}
-```
-
 ### tournamentWins
 
 ```solidity
 mapping(uint256 => mapping(address => uint256)) tournamentWins
 ```
 
-_uint tournamentID = > address player => wins_
-
-### protocolFee
-
-```solidity
-uint256 protocolFee
-```
-
-_7% protocol fee_
-
-### payoutProfile3
-
-```solidity
-uint256[3] payoutProfile3
-```
-
-_60% 35%_
-
-### payoutProfile4_9
-
-```solidity
-uint256[4] payoutProfile4_9
-```
-
-_40% 25% 20% 15%_
-
-### payoutProfile10_25
-
-```solidity
-uint256[7] payoutProfile10_25
-```
-
-_40% 25% 1% 10% 5% 2.5% 2.5%_
+_uint tournamentID => address player => wins_
 
 ### ChessWagerAddress
 
@@ -1284,12 +1673,6 @@ address ChessWagerAddress
 
 ```solidity
 address PaymentSplitter
-```
-
-### deployer
-
-```solidity
-address deployer
 ```
 
 ### constructor
@@ -1304,11 +1687,23 @@ constructor(address _chessWager, address _paymentSplitter) public
 function getTournamentPlayers(uint256 tournamentID) external view returns (address[])
 ```
 
+Returns players in tournament
+
+### getAuthorizedPlayers
+
+```solidity
+function getAuthorizedPlayers(uint256 tournamentID) external view returns (address[])
+```
+
+Returns authorized players in tournament
+
 ### getTournamentWagerAddresses
 
 ```solidity
 function getTournamentWagerAddresses(uint256 tournamentID) external view returns (address[])
 ```
+
+Returns wager addresses in tournament
 
 ### viewTournamentScore
 
@@ -1316,19 +1711,11 @@ function getTournamentWagerAddresses(uint256 tournamentID) external view returns
 function viewTournamentScore(uint256 tournamentID) external view returns (address[], uint256[])
 ```
 
-_used to calculate score but only designed for view as this will lead to more gas_
+Calculates score
 
-### checkIfPlayerAlreadyJoined
-
-```solidity
-function checkIfPlayerAlreadyJoined(uint256 tournamentID, address player) internal view returns (bool)
-```
-
-### isPlayerInTournament
-
-```solidity
-function isPlayerInTournament(uint256 tournamentID, address player) internal view returns (bool)
-```
+_designed as view only
+returns addresses[] players
+returns uint[] scores_
 
 ### getPlayersSortedByWins
 
@@ -1336,7 +1723,21 @@ function isPlayerInTournament(uint256 tournamentID, address player) internal vie
 function getPlayersSortedByWins(uint256 tournamentID) public view returns (address[])
 ```
 
-_returns addresses winners sorted by highest wins_
+Returns addresses winners sorted by highest wins
+
+### isPlayerInTournament
+
+```solidity
+function isPlayerInTournament(uint256 tournamentID, address player) internal view returns (bool)
+```
+
+Checks if address is in tournament
+
+### isPlayerAuthenticatedInTournament
+
+```solidity
+function isPlayerAuthenticatedInTournament(uint256 tournamentID, address player) internal view returns (bool)
+```
 
 ### createTournament
 
@@ -1347,6 +1748,16 @@ function createTournament(uint256 numberOfPlayers, uint256 numberOfGames, addres
 Creates a Tournament
 
 _creates a tournament, and increases the global tournament nonce_
+
+### createTournamentWithSpecificPlayers
+
+```solidity
+function createTournamentWithSpecificPlayers(address[] specificPlayers, uint256 numberOfGames, address token, uint256 tokenAmount, uint256 timeLimit, bool shouldJoin) external returns (uint256)
+```
+
+Creates a Tournament with specific players
+
+_Creates a tournament, and increases the global tournament nonce_
 
 ### joinTournament
 
@@ -1368,7 +1779,7 @@ Join tournament
 function startTournament(uint256 tournamentID) external
 ```
 
-starts the tournament
+Starts the tournament
 
 _minimum number of players = 3
 if the number of players is greater than 3 and not equal to
@@ -1380,7 +1791,7 @@ the maxNumber of players the tournament can start 1 day after creation_
 function exitTournament(uint256 tournamentID) external
 ```
 
-user can exit tournament
+Exit tournament
 
 _user can exit if tournament is not in progress_
 
@@ -1390,9 +1801,18 @@ _user can exit if tournament is not in progress_
 function payoutTournament(uint256 tournamentID) external
 ```
 
-handle payout of tournament
+Handle payout of tournament
 
-_tallies, gets payout profile, sorts players by wins, handles payout_
+_tallies, gets payout profile, sorts players by wins, handles payout
+one day must pass after end time for all games in GameWager contract_
+
+### depositToTournament
+
+```solidity
+function depositToTournament(uint256 tournamentID, uint256 amount) external
+```
+
+Used to deposit prizes to tournament
 
 ## IChessFishNFT
 
@@ -1444,62 +1864,20 @@ uint256 value
 constructor() public
 ```
 
-### mint
+## USDC
+
+_Test Token with large supply_
+
+### _initial_supply
 
 ```solidity
-function mint(uint256 amount) external
+uint256 _initial_supply
 ```
 
-## Math
-
-_Standard math utilities missing in the Solidity language._
-
-### max
+### value
 
 ```solidity
-function max(uint8 a, uint8 b) internal pure returns (uint256)
-```
-
-_Returns the largest of two numbers._
-
-### min
-
-```solidity
-function min(uint8 a, uint8 b) internal pure returns (uint256)
-```
-
-_Returns the smallest of two numbers._
-
-## ChessFishNFT
-
-### wagerHashes
-
-```solidity
-mapping(uint256 => address) wagerHashes
-```
-
-### ChessWager
-
-```solidity
-address ChessWager
-```
-
-### deployer
-
-```solidity
-address deployer
-```
-
-### onlyChessFishWager
-
-```solidity
-modifier onlyChessFishWager()
-```
-
-### onlyDeployer
-
-```solidity
-modifier onlyDeployer()
+uint256 value
 ```
 
 ### constructor
@@ -1508,19 +1886,25 @@ modifier onlyDeployer()
 constructor() public
 ```
 
-### setChessFishAddress
+### decimals
 
 ```solidity
-function setChessFishAddress(address _chessFish) external
+function decimals() public pure returns (uint8)
 ```
 
-### awardWinner
+_Returns the number of decimals used to get its user representation.
+For example, if `decimals` equals `2`, a balance of `505` tokens should
+be displayed to a user as `5.05` (`505 / 10 ** 2`).
 
-```solidity
-function awardWinner(address player, address wagerHash) external returns (uint256)
-```
+Tokens usually opt for a value of 18, imitating the relationship between
+Ether and Wei. This is the default value returned by this function, unless
+it's overridden.
 
-## ChessFishToken
+NOTE: This information is only used for _display_ purposes: it in
+no way affects any of the arithmetic of the contract, including
+{IERC20-balanceOf} and {IERC20-transfer}._
+
+## ChessFish
 
 ### _initial_supply
 
@@ -1543,7 +1927,7 @@ string symbol_
 ### constructor
 
 ```solidity
-constructor() public
+constructor(address _owner) public
 ```
 
 ## CrowdSale
@@ -1560,22 +1944,28 @@ address deployer
 address ChessFishToken
 ```
 
+### USDC
+
+```solidity
+address USDC
+```
+
+### value
+
+```solidity
+uint256 value
+```
+
 ### TokensPurchased
 
 ```solidity
-event TokensPurchased(address buyer, uint256 amount, uint256 weiSpent)
-```
-
-### OnlyDeployer
-
-```solidity
-modifier OnlyDeployer()
+event TokensPurchased(address buyer, uint256 amountIn, uint256 amountOut)
 ```
 
 ### constructor
 
 ```solidity
-constructor(address _chessFishToken) public
+constructor(address _owner, address _chessFishToken, address _USDC, uint256 _value) public
 ```
 
 ### deposit
@@ -1584,22 +1974,34 @@ constructor(address _chessFishToken) public
 function deposit(uint256 amount) external
 ```
 
-### withdraw
+### updateUSDCAddress
 
 ```solidity
-function withdraw() external
+function updateUSDCAddress(address _USDC) external
 ```
 
 ### getChessFishTokens
 
 ```solidity
-function getChessFishTokens() external payable
+function getChessFishTokens(uint256 amountIn) external
 ```
 
 ### endCrowdSale
 
 ```solidity
 function endCrowdSale() external
+```
+
+### withdraw
+
+```solidity
+function withdraw() external
+```
+
+### withdrawERC20
+
+```solidity
+function withdrawERC20(address token) external
 ```
 
 ## PaymentSplitter
@@ -1761,4 +2163,180 @@ function releaseERC20(contract IERC20 token, address account) public
 _Triggers a transfer to `account` of the amount of `token` tokens they are owed, according to their
 percentage of the total shares and their previous withdrawals. `token` must be the address of an IERC20
 contract._
+
+## TreasuryVester
+
+### splitter
+
+```solidity
+address splitter
+```
+
+### cfsh
+
+```solidity
+address cfsh
+```
+
+### recipient
+
+```solidity
+address recipient
+```
+
+### vestingAmount
+
+```solidity
+uint256 vestingAmount
+```
+
+### vestingBegin
+
+```solidity
+uint256 vestingBegin
+```
+
+### vestingCliff
+
+```solidity
+uint256 vestingCliff
+```
+
+### vestingEnd
+
+```solidity
+uint256 vestingEnd
+```
+
+### lastUpdate
+
+```solidity
+uint256 lastUpdate
+```
+
+### constructor
+
+```solidity
+constructor(address cfsh_, address recipient_, uint256 vestingAmount_, uint256 vestingBegin_, uint256 vestingCliff_, uint256 vestingEnd_) public
+```
+
+### setRecipient
+
+```solidity
+function setRecipient(address recipient_) public
+```
+
+### claim
+
+```solidity
+function claim() public
+```
+
+### releaseDividendsERC20
+
+```solidity
+function releaseDividendsERC20(address token) external
+```
+
+### releaseDividendsNative
+
+```solidity
+function releaseDividendsNative() external
+```
+
+### setSplitterContract
+
+```solidity
+function setSplitterContract(address _splitter) external
+```
+
+## ICFSH
+
+### balanceOf
+
+```solidity
+function balanceOf(address account) external view returns (uint256)
+```
+
+### transfer
+
+```solidity
+function transfer(address dst, uint256 rawAmount) external returns (bool)
+```
+
+## IPaymentSplitter
+
+### releasableERC20
+
+```solidity
+function releasableERC20(address token, address account) external returns (uint256)
+```
+
+### releasableNative
+
+```solidity
+function releasableNative(address account) external returns (uint256)
+```
+
+### releaseERC20
+
+```solidity
+function releaseERC20(address token, address account) external
+```
+
+### releaseNative
+
+```solidity
+function releaseNative(address account) external
+```
+
+## ChessFishNFT
+
+### wagerAddresses
+
+```solidity
+mapping(uint256 => address) wagerAddresses
+```
+
+### ChessWager
+
+```solidity
+address ChessWager
+```
+
+### deployer
+
+```solidity
+address deployer
+```
+
+### onlyChessFishWager
+
+```solidity
+modifier onlyChessFishWager()
+```
+
+### onlyDeployer
+
+```solidity
+modifier onlyDeployer()
+```
+
+### constructor
+
+```solidity
+constructor() public
+```
+
+### setChessFishAddress
+
+```solidity
+function setChessFishAddress(address _chessFish) external
+```
+
+### awardWinner
+
+```solidity
+function awardWinner(address player, address wagerAddress) external returns (uint256)
+```
 
