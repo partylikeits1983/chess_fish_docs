@@ -50,8 +50,10 @@ export const DividendCalculator = () => {
   
   const inputFieldStyle = {
     width: '50%', // Adjust this value as needed
-    marginLeft: '10px' // Keeps space between label and input
+    marginLeft: '10px', // Keeps space between label and input
+    border: '1px solid black' // Adds a 1px black border to the input fields
   };
+  
 
   const buttonStyle = {
     marginTop: '10px',
