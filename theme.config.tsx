@@ -3,6 +3,8 @@ import { DocsThemeConfig } from 'nextra-theme-docs'
 import { text } from 'stream/consumers';
 
 const config: DocsThemeConfig = {
+
+  
 logo:  <strong>Chess.Fish Docs</strong>,
 
 head:  
@@ -25,10 +27,19 @@ chat: {
     </svg>
   )
 },
+editLink: {
+  text: "",
+},
+
+
+feedback: {
+  content: "Question? Send us your feedback!",  // Text for the feedback button
+  labels: 'feedback,docs',           // Labels for the GitHub issue
+  useLink: () => 'https://twitter.com/evmchess', // Link to your feedback form or issue tracker
+},
 docsRepositoryBase: 'https://github.com/Chess-Fish',
 footer: {
 text: 'Chess.fish Docs',
-
 },
 
 useNextSeoProps() {
